@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, func, select
+from sqlalchemy import Integer, func, literal, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
@@ -61,25 +61,28 @@ class SQLOrganizationGateway(OrganizationGateway):
             center_lng: float,
             radius_meters: float,
     ) -> list[Organization]:
-        """
-        Get all organizations located in buildings within radius_meters of the point (center_lat, center_lng)
-        """
+        """Найти организации в радиусе от точки по координатам."""
+
         earth_radius = 6371000  # Earth's radius in meters
+
+        lat_radians = func.radians(center_lat)
+        lng_radians = func.radians(center_lng)
+        building_lat = func.radians(buildings_table.c.latitude)
+        building_lng = func.radians(buildings_table.c.longitude)
+
+        distance_expr = earth_radius * func.acos(
+            func.cos(lat_radians) * func.cos(building_lat)
+            * func.cos(building_lng - lng_radians)
+            + func.sin(lat_radians) * func.sin(building_lat),
+        )
 
         stmt = (
             select(Organization)
-            .join(buildings_table, organizations_table.c.building_id == buildings_table.c.id)
-            .where(
-                (
-                        earth_radius * func.acos(
-                    func.cos(func.radians(center_lat))
-                    * func.cos(func.radians(buildings_table.c.latitude))
-                    * func.cos(func.radians(buildings_table.c.longitude) - func.radians(center_lng))
-                    + func.sin(func.radians(center_lat))
-                    * func.sin(func.radians(buildings_table.c.latitude)),
-                )
-                ) <= radius_meters,
+            .join(
+                buildings_table,
+                organizations_table.c.building_id == buildings_table.c.id,
             )
+            .where(distance_expr <= radius_meters)
         )
 
         result = await self.session.execute(stmt)
@@ -90,20 +93,20 @@ class SQLOrganizationGateway(OrganizationGateway):
             activity_name: str,
             max_depth: int = 3,
     ) -> list[Organization]:
-        """
-        Получить все организации, которые относятся к указанному виду деятельности
-        включая все подвиды до 3 уровня.
-        """
-        # начальный уровень (root activity)
         cte = (
-            select(activities_table.c.id, activities_table.c.parent_id, func.cast(1, Integer).label("level"))
-            .where(func.lower(activities_table.c.name) == activity_name.lower())
+            select(
+                activities_table.c.id,
+                activities_table.c.parent_id,
+                func.cast(literal(1), Integer).label("level"),
+            )
+            .where(
+                func.lower(activities_table.c.name) == activity_name.lower(),
+            )
             .cte(name="activity_tree", recursive=True)
         )
 
         activity_alias = aliased(activities_table)
 
-        # рекурсивное подключение потомков
         cte = cte.union_all(
             select(
                 activity_alias.c.id,
@@ -116,11 +119,18 @@ class SQLOrganizationGateway(OrganizationGateway):
             ),
         )
 
-        # присоединяем организации через связующую таблицу
         stmt = (
             select(Organization)
-            .join(organization_activities_table, Organization.id == organization_activities_table.c.organization_id)
-            .join(cte, organization_activities_table.c.activity_id == cte.c.id)
+            .join(
+                organization_activities_table,
+                organizations_table.c.id
+                ==
+                organization_activities_table.c.organization_id,
+            )
+            .join(
+                cte,
+                organization_activities_table.c.activity_id == cte.c.id,
+            )
             .distinct()
         )
 

@@ -1,6 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.common.models import Building, Activity, Organization, OrganizationPhone
+from app.application.common.models import (
+    Activity,
+    Building,
+    Organization,
+    OrganizationPhone,
+)
 from app.application.common.ports.initial_gateway import InitialDataGateway
 
 
@@ -9,36 +14,45 @@ class SQLInitialDataGateway(InitialDataGateway):
         self.session = session
 
     async def create_initial_data(self) -> None:
-        # I was too lazy to do it properly, so this came out, please understand and forgive me =)
+        # I was too lazy to do it properly, so this came out,
+        # please understand and forgive me =)
 
         buildings = [
-            Building(address="г. Москва, ул. Ленина 1, офис 3", latitude=55.7558, longitude=37.6173),
-            Building(address="г. Новосибирск, ул. Блюхера 32/1", latitude=55.0302, longitude=82.9204),
+            Building(
+                address="г. Москва, ул. Ленина 1, офис 3",  # noqa: RUF001
+                latitude=55.7558,
+                longitude=37.6173,
+            ),
+            Building(
+                address="г. Новосибирск, ул. Блюхера 32/1",  # noqa: RUF001
+                latitude=55.0302,
+                longitude=82.9204,
+            ),
         ]
 
         food = Activity(name="Еда")
         cars = Activity(name="Автомобили")
 
         meat = Activity(name="Мясная продукция")
-        meat.parent = food
+        meat.parent = food # type: ignore[attr-defined]
         milk = Activity(name="Молочная продукция")
-        milk.parent = food
+        milk.parent = food # type: ignore[attr-defined]
 
         truck = Activity(name="Грузовые")
-        truck.parent = cars
+        truck.parent = cars # type: ignore[attr-defined]
         car = Activity(name="Легковые")
-        car.parent = cars
+        car.parent = cars # type: ignore[attr-defined]
 
         parts = Activity(name="Запчасти")
-        parts.parent = car
+        parts.parent = car # type: ignore[attr-defined]
         accessories = Activity(name="Аксессуары")
-        accessories.parent = car
+        accessories.parent = car # type: ignore[attr-defined]
 
         activities = [food, meat, milk, cars, truck, car, parts, accessories]
 
         organizations = [
             Organization(
-                name="ООО Рога и Копыта",
+                name="ООО Рога и Копыта",  # noqa: RUF001
                 building=buildings[1],
                 is_active=True,
                 phones=[
@@ -48,7 +62,7 @@ class SQLInitialDataGateway(InitialDataGateway):
                 ],
             ),
             Organization(
-                name="ЗАО Мясокомбинат Сибирский",
+                name="ЗАО Мясокомбинат Сибирский",  # noqa: RUF001
                 building=buildings[0],
                 is_active=True,
                 phones=[
@@ -69,4 +83,5 @@ class SQLInitialDataGateway(InitialDataGateway):
         organizations[1].activities.append(activities[1])
         organizations[2].activities.extend([activities[5], activities[6]])
 
-        self.session.add_all(activities + organizations)
+        self.session.add_all(activities)
+        self.session.add_all(organizations)

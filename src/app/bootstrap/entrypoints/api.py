@@ -27,7 +27,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
     await app.state.dishka_container.close()
 
-def custom_openapi(app: FastAPI) ->  dict[str, Any]:
+
+def custom_openapi(app: FastAPI) -> dict[str, Any]:
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(
@@ -58,5 +59,5 @@ def create_app() -> FastAPI:
     config = load_settings()
     container = fastapi_container(config)
     setup_dishka(container=container, app=app)
-    app.openapi = lambda: custom_openapi(app)
+    app.openapi = lambda: custom_openapi(app)  # type: ignore[method-assign]
     return app

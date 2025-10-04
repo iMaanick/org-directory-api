@@ -19,4 +19,7 @@ class InvalidApiKeyError(ApplicationError):
 
     @property
     def title(self) -> str:
-        return f"Invalid API key '{self.provided_value}' in header '{self.header_name}'"
+        return (
+            f"Invalid API key '{self.provided_value}' "
+            f"in header '{self.header_name}'"
+        )

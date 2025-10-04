@@ -28,11 +28,15 @@ class SearchOrganizationByActivityUseCase:
             request_data: SearchOrganizationByActivityRequest,
     ) -> list[Organization]:
         self.auth_key_manager.validate()
-        activity = await self.activity_gateway.get_by_name(request_data.activity_name)
+        activity = await self.activity_gateway.get_by_name(
+            request_data.activity_name,
+        )
         if activity is None:
             raise NotFoundError(
                 entity="activity",
                 field="name",
                 value=request_data.activity_name,
             )
-        return await self.organization_gateway.get_by_activity(request_data.activity_name)
+        return await self.organization_gateway.get_by_activity(
+            request_data.activity_name,
+        )

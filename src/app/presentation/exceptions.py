@@ -13,8 +13,9 @@ from app.application.common.exceptions.auth import (
 )
 from app.application.common.exceptions.base import ApplicationError
 from app.application.common.exceptions.common import (
+    InitialDataAlreadyExistsError,
     NotFoundError,
-    UnexpectedError, InitialDataAlreadyExistsError,
+    UnexpectedError,
 )
 from app.presentation.api.base import ErrorData, ErrorResponse
 from app.presentation.api.responses import ORJSONResponse
