@@ -69,4 +69,4 @@ class SQLInitialDataGateway(InitialDataGateway):
         organizations[1].activities.append(activities[1])
         organizations[2].activities.extend([activities[5], activities[6]])
 
-        self.session.add_all(buildings + activities + organizations)
+        self.session.add_all(activities + organizations)

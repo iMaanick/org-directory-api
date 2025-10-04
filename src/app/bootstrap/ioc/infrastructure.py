@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from app.application.common.ports.uow import UoW
 from app.bootstrap.configs import ApiConfig, PostgresConfig
 from app.infrastructure.auth.api_key_transport import ApiKeyTransport
 from app.presentation.auth.static_api_key_validator import (
@@ -60,3 +61,9 @@ class InfrastructureProvider(Provider):
             self, config: ApiConfig, request: Request,
     ) -> ApiKeyTransport:
         return StaticApiKeyValidator(config.api_key, request)
+
+    @provide(scope=Scope.REQUEST)
+    async def get_uow(
+            self, session: AsyncSession,
+    ) -> UoW:
+        return session
