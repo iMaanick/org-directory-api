@@ -15,3 +15,11 @@ class NotFoundError(ApplicationError):
     @property
     def title(self) -> str:
         return f"{self.entity} with {self.field}={self.value} not found"
+
+class InitialDataAlreadyExistsError(ApplicationError):
+    def __init__(self) -> None:
+        super().__init__()
+
+    @property
+    def title(self) -> str:
+        return "Initial data already exists"

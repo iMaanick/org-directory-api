@@ -14,7 +14,7 @@ from app.application.common.exceptions.auth import (
 from app.application.common.exceptions.base import ApplicationError
 from app.application.common.exceptions.common import (
     NotFoundError,
-    UnexpectedError,
+    UnexpectedError, InitialDataAlreadyExistsError,
 )
 from app.presentation.api.base import ErrorData, ErrorResponse
 from app.presentation.api.responses import ORJSONResponse
@@ -42,6 +42,10 @@ def setup_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(
         InvalidApiKeyError,
         error_handler(status.HTTP_403_FORBIDDEN),
+    )
+    app.add_exception_handler(
+        InitialDataAlreadyExistsError,
+        error_handler(status.HTTP_409_CONFLICT),
     )
     app.add_exception_handler(
         Exception,
