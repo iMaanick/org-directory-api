@@ -1,38 +1,17 @@
-FROM python:3.12-slim-bookworm AS python-base
+FROM python:3.12-alpine
 
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONOPTIMIZE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PIP_DEFAULT_TIMEOUT=100 \
-    APP_PATH="/app" \
-    UV_VERSION="0.6.14"
+RUN apk add --no-cache curl
 
-ENV VIRTUAL_ENV="$APP_PATH/.venv"
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV APP_HOME=/home/app/
+WORKDIR $APP_HOME
 
-WORKDIR $APP_PATH
+RUN mkdir ./src
 
-FROM python-base AS builder
+RUN pip install uv
+COPY ./pyproject.toml  $APP_HOME
+COPY ./alembic.ini  $APP_HOME
+RUN uv pip install -e . --system
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc git \
-    && rm -rf /var/lib/apt/lists/*
+COPY ./src/ $APP_HOME/src/
 
-RUN pip install --no-cache-dir "uv==$UV_VERSION"
-
-COPY ./pyproject.toml ./uv.lock ./
-RUN uv venv -p 3.12 \
-    && uv sync --all-extras --no-install-project
-COPY ./src ./src
-RUN uv sync --all-extras --no-editable
-
-FROM python-base AS runner
-
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY --from=builder $VIRTUAL_ENV $VIRTUAL_ENV
-
-CMD ["uvicorn", "--factory", "app.bootstrap.entrypoints.api:create_app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "alembic -c alembic.ini upgrade head && uvicorn --factory app.bootstrap.entrypoints.api:create_app --host 0.0.0.0 --port 8000"]

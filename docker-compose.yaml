@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  db:
+    container_name: org_directory_pg_final
+    image: postgres:16
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 5s
+      retries: 5
+      timeout: 5s
+    volumes:
+      - ./data_pg/db:/var/lib/postgresql/data
+    restart: always
+
+  api:
+    container_name: org_directory_api_final
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    restart: always
+
+volumes:
+  postgres_data:
