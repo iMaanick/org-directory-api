@@ -6,7 +6,22 @@ from app.presentation.api.initial_data.router import initial_data_router
 from app.presentation.api.organizations.router import organizations_router
 
 root_router = APIRouter()
-root_router.include_router(healthcheck_router)
-root_router.include_router(organizations_router, prefix="/organizations")
-root_router.include_router(buildings_router, prefix="/buildings")
-root_router.include_router(initial_data_router, prefix="/data_router")
+root_router.include_router(
+    healthcheck_router,
+    tags=["Healthcheck"],
+)
+root_router.include_router(
+    organizations_router,
+    prefix="/organizations",
+    tags=["Organizations"],
+)
+root_router.include_router(
+    buildings_router,
+    prefix="/buildings",
+    tags=["Buildings"],
+)
+root_router.include_router(
+    initial_data_router,
+    prefix="/data_router",
+    tags=["Initial Data"],
+)
